@@ -1,0 +1,15 @@
+[package]
+name = "httpipe"
+version = "0.1.0"
+authors = ["Piotr Oleskiewicz"]
+edition = "2018"
+license = "GPL-3.0"
+
+[dependencies]
+async-process = "1"
+async-std = "1.9"
+form_urlencoded = "1"
+futures = "0.3"
+futures-lite = "1"
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }

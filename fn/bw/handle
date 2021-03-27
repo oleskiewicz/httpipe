@@ -1,0 +1,2 @@
+#!/bin/sh -e
+convert - -grayscale Rec709Luminance fd:1
