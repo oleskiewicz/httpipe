@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+dir="$(dirname "$0")"
+echo "Welcome to fn!"
+
+echo
+echo "Available functions:"
+for f in "$dir"/*
+do
+  echo "- $(basename "$f")"
+done

@@ -1,3 +1,6 @@
 #!/bin/sh -e
-i="$(cat -)"
-echo "$i"
+
+# i="$(cat -)"
+# echo "$i"
+
+cat -
