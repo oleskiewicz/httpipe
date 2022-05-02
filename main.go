@@ -12,17 +12,18 @@ import (
 	"time"
 )
 
+// arguments
 var fndir = "."
 
-func handleDoc(fn string) string {
+func handleDoc(fn string) (string, error) {
 	docpath := path.Join(fndir, fn, "doc")
 	out, err := os.ReadFile(docpath)
 
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return string(out)
+	return string(out), nil
 
 }
 
@@ -63,7 +64,12 @@ func handle(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case http.MethodGet:
-		fmt.Fprintf(w, handleDoc(fn))
+		out, err := handleDoc(fn)
+		if err != nil {
+			http.NotFound(w, req)
+			return
+		}
+		fmt.Fprintf(w, out)
 	case http.MethodPost:
 		body := req.Body
 		start := time.Now()
@@ -82,10 +88,7 @@ func handlePipe(w http.ResponseWriter, req *http.Request) {
 
 	in := req.Body
 	out := ""
-
 	start := time.Now()
-	// for i := 2; i < len(fns); i++ {
-	// 	fn := fns[i]
 	for _, fn := range fns {
 		if fn == "" || fn == "pipe" {
 			continue
@@ -100,7 +103,10 @@ func handlePipe(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	flag.StringVar(&fndir, "d", ".", "function directory")
+	if val, ok := os.LookupEnv("HTTPIPE_DIR"); ok {
+		fndir = val
+	}
+	flag.StringVar(&fndir, "d", fndir, "function directory")
 	flag.Parse()
 
 	http.HandleFunc("/", handle)

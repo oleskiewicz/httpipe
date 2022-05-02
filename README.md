@@ -22,6 +22,12 @@ Extras
 
 Example
 -------
+Invoke:
+
+    $ envdir env ./httpipe  # or...
+    $ HTTPIPE_DIR=fn ./httpipe  # or...
+    $ ./httpipe -d fn
+
 The simplest use case is with strings:
 
     $ cat ./fn/b64e/handle
