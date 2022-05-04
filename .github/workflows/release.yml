@@ -4,17 +4,24 @@ on:
       - '*'
 
 jobs:
-  build:
+  release:
+    strategy:
+      matrix:
+        goarch: [x86_64, arm64]
+        goos: [linux, darwin, openbds, windows]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v3
       with:
         go-version: 1.18
-    - run: go build -v ./...
+    - run: go build -v -o httpipe-$(go env GOOS)-$go env GOARCH) ./...
     - uses: softprops/action-gh-release@v1
       with:
-        files: httpipe
+        files: httpipe-*
       env:
+        CGO_ENABLED: 0
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
