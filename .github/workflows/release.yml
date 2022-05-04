@@ -7,7 +7,7 @@ jobs:
   release:
     strategy:
       matrix:
-        goarch: [x86_64, arm64]
+        goarch: [amd64, arm64]
         goos: [linux, darwin, openbds, windows]
     runs-on: ubuntu-latest
     steps:
