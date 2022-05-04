@@ -2,32 +2,29 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
 
-// arguments
 var fndir = "."
 
-func handleDoc(fn string) (string, error) {
+func handleDoc(fn string) ([]byte, error) {
 	docpath := path.Join(fndir, fn, "doc")
 	out, err := os.ReadFile(docpath)
-
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
-
-	return string(out), nil
-
+	return out, nil
 }
 
-func handleExec(fn string, body io.Reader) string {
+func handleExec(fn string, body io.Reader) io.Reader {
 	fnpath := path.Join(fndir, fn, "handle")
 
 	logpath := path.Join(fndir, fn, "log")
@@ -43,19 +40,18 @@ func handleExec(fn string, body io.Reader) string {
 		Stderr: logfile,
 	}
 
-	out, err := cmd.Output()
-
-	if err != nil {
+	out, _ := cmd.StdoutPipe()
+	if err := cmd.Start(); err != nil {
 		panic(err)
 	}
 
-	return string(out)
+	return out
 
 }
 
 func handle(w http.ResponseWriter, req *http.Request) {
 	fn := req.URL.Path
-	fmt.Printf("%v\t%v\n", req.Method, fn)
+	log.Printf("%v\t%v\n", req.Method, fn)
 
 	if _, err := os.Stat(path.Join(fndir, fn)); os.IsNotExist(err) {
 		http.NotFound(w, req)
@@ -63,43 +59,55 @@ func handle(w http.ResponseWriter, req *http.Request) {
 	}
 
 	switch req.Method {
+
 	case http.MethodGet:
 		out, err := handleDoc(fn)
 		if err != nil {
 			http.NotFound(w, req)
 			return
 		}
-		fmt.Fprintf(w, out)
+		w.Write(out)
+
 	case http.MethodPost:
 		body := req.Body
 		start := time.Now()
-		out := handleExec(fn, body)
+		out, err := io.ReadAll(handleExec(fn, body))
+		if err != nil {
+			http.Error(w, "", http.StatusInternalServerError)
+			return
+		}
 		elapsed := time.Since(start).Milliseconds()
-		w.Header().Set("X-Duration-Milliseconds", fmt.Sprintf("%d", elapsed))
-		fmt.Fprintf(w, out)
+		w.Header().Set("X-Duration-Milliseconds", strconv.FormatInt(elapsed, 10))
+		w.Write(out)
+
 	default:
-		fmt.Println("unhandled, error")
+		http.Error(w, "", http.StatusBadRequest)
+		return
+
 	}
 }
 
 func handlePipe(w http.ResponseWriter, req *http.Request) {
-	fmt.Printf("%v\tpipe\n", req.Method)
-	fns := strings.Split(req.URL.Path, "/")
+	var in io.Reader = req.Body
+	var out io.Reader
 
-	in := req.Body
-	out := ""
+	fns := strings.Split(req.URL.Path, "/")[2:]
+	log.Printf("%v\t/pipe[%s]\n", req.Method, strings.Join(fns, "|"))
+
 	start := time.Now()
 	for _, fn := range fns {
-		if fn == "" || fn == "pipe" {
-			continue
-		}
 		out = handleExec(fn, in)
-		in = io.NopCloser(strings.NewReader(out))
-		fmt.Printf("\tpipe\t%s\t%s\n", fn, out)
+		in = io.NopCloser(out)
 	}
 	elapsed := time.Since(start).Milliseconds()
-	w.Header().Set("X-Duration-Milliseconds", fmt.Sprintf("%d", elapsed))
-	fmt.Fprintf(w, out)
+	w.Header().Set("X-Duration-Milliseconds", strconv.FormatInt(elapsed, 10))
+
+	res, err := io.ReadAll(out)
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	w.Write(res)
 }
 
 func main() {

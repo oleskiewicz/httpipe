@@ -24,7 +24,7 @@ Example
 -------
 Invoke:
 
-    $ envdir env ./httpipe  # or...
+    $ envdir ./env ./httpipe  # or...
     $ HTTPIPE_DIR=fn ./httpipe  # or...
     $ ./httpipe -d fn
 
@@ -43,12 +43,10 @@ The simplest use case is with strings:
 	$ curl -d "hello world=" 0.0.0.0:8080/pipe/b64e/b64d
 	hello world%
 
-Todo
-----
-Piping doesn't work with binary files:
-
     $ cat ./fn/bw/handle
     #!/bin/sh -e
     convert - -grayscale Rec709Luminance fd:1
 
-    $ curl --data-binary @./meme.jpg 0.0.0.0:8080/bw > meme_bw.jpg
+    $ curl --data-binary @./meme.jpg 0.0.0.0:8080/bw > meme_bw.jpg # or...
+    $ < ./meme.jpg curl --data-binary @- 0.0.0.0:8080/bw > ./meme_bw.jpg
+
