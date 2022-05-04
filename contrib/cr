@@ -1,0 +1,13 @@
+#!/bin/sh -e
+#
+# cr - container run
+#   command-line: cr python:3-slim python
+#   shebang: env -S cr python:3-slim python
+
+docker run -i -t --rm                \
+	-e DISPLAY="$(hostname):0"       \
+	-v /tmp/.X11-unix:/tmp/.X11-unix \
+	-v "$(PWD):/src"                 \
+	-w "/src"                        \
+	--entrypoint ""                  \
+	"$@"

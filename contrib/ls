@@ -1,0 +1,16 @@
+#!/bin/sh -e
+
+(
+    echo "name\truns"
+    echo "----\t----"
+    for f in ./fn/*
+    do
+      if [ -f "$f/runs" ]
+      then
+          runs="$(wc -l < "$f/runs")"
+      else
+          runs="0"
+      fi
+      printf "%s\t%s\n" "$(basename "$f")" "$runs"
+    done
+) | column -t
