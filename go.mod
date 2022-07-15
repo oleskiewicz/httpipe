@@ -1,3 +1,3 @@
-module src.oleskiewi.cz/httpipe
+module oleskiewi.cz/httpipe
 
 go 1.18
